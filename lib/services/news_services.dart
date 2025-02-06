@@ -11,8 +11,6 @@ class NewsServices {
   List<ArticlesModel> newsData = [];
   NewsServices();
   String changedData() {
-    print(lang);
-
     return "$baseUrl?apikey=$apikey&category=$categoryType&language=$lang";
   }
 
@@ -22,7 +20,6 @@ class NewsServices {
     newsData = [];
     nextPage = "";
     getNextNews();
-    // changedData();
   }
 
   Future<List<ArticlesModel>> getGeneralNews(categoryName) async {
@@ -50,8 +47,6 @@ class NewsServices {
 
   Future<List<ArticlesModel>> getNextNews() async {
     /// handle for the internet connection
-    print("$lang that was imp");
-
     if (nextPage == "") {
       newsData = await getGeneralNews(categoryType);
       return newsData;

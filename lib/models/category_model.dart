@@ -5,17 +5,17 @@ class Category {
 }
 
 Category business =
-    Category(categoryImage: "assets/business.avif", categoryName: "business");
+    Category(categoryImage: "assets/business.jpeg", categoryName: "business");
 Category entertainment = Category(
     categoryImage: "assets/entertainment.jpg", categoryName: "entertainment");
 Category world =
-    Category(categoryImage: "assets/general.avif", categoryName: "world");
+    Category(categoryImage: "assets/general.jpg", categoryName: "world");
 Category health =
     Category(categoryImage: "assets/health.avif", categoryName: "health");
 Category science =
     Category(categoryImage: "assets/science.avif", categoryName: "science");
 Category sports =
-    Category(categoryImage: "assets/sports.avif", categoryName: "sports");
+    Category(categoryImage: "assets/sports.jpeg", categoryName: "sports");
 Category technology = Category(
     categoryImage: "assets/technology.jpeg", categoryName: "technology");
 Category education =

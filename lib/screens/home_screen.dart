@@ -11,6 +11,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String currentLanguage = 'ar'; // Default language
+
+  void updateLanguage(String newLang) {
+    setState(() {
+      currentLanguage = newLang;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,43 +35,53 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                   color: Colors.amber[800], fontWeight: FontWeight.bold),
             ),
-            const Padding(
-              padding: EdgeInsets.only(left: 20),
-              child: DropDownList(),
+            Padding(
+              padding: const EdgeInsets.only(left: 20),
+              child: //DropDownList(),
+                  DropDownList(
+                currentLanguage: currentLanguage,
+                onLanguageChanged: updateLanguage,
+              ),
             ),
             // IconButton(
-            //     onPressed: () {
-            //       showDialog(
-            //         context: context,
-            //         builder: (context) {
-            //           return TextField(
-            //             onSubmitted: (value) {
-            //               setState(() {
-            //                 Navigator.of(context).pop();
-            //                 NewsServices().searchNews(value);
-            //               });
-            //             },
-            //           );
-            //         },
-            //       );
-            //     },
-            //     icon: Icon(Icons.search_rounded))
+            //   onPressed: () {
+            //     showDialog(
+            //       context: context,
+            //       builder: (context) {
+            //         return TextField(
+            //           onSubmitted: (value) {
+            //             setState(() {
+            //               Navigator.of(context).pop();
+            //               NewsServices().searchNews(value);
+            //             });
+            //           },
+            //         );
+            //       },
+            //     );
+            //   },
+            //   icon: const Icon(Icons.search_rounded),
+            // )
           ],
         ),
       ),
-      body: const CustomScrollView(
+      body: CustomScrollView(
         slivers: [
           SliverAppBar(
             titleSpacing: 10,
             floating: true,
             toolbarHeight: 130,
-            title: CategoryListViewBuilder(),
+            title: CategoryListViewBuilder(
+              language: currentLanguage,
+            ),
           ),
           SliverToBoxAdapter(
             child: SizedBox(
               //we need to remove the numbers.
               height: 600,
-              child: NewsListViewBuilder(),
+              child: NewsListViewBuilder(
+                categoryType: "top",
+                language: currentLanguage,
+              ),
             ),
           )
         ],

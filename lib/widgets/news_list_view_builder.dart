@@ -5,43 +5,74 @@ import 'package:news_app_ui_setup/widgets/news_list_view.dart';
 
 class NewsListViewBuilder extends StatefulWidget {
   final String? categoryType;
+  final String language;
+
   const NewsListViewBuilder({
     super.key,
     this.categoryType,
+    required this.language,
   });
 
   @override
   State<NewsListViewBuilder> createState() => _NewsListViewBuilderState();
-  State<NewsListViewBuilder> creatState() => Taxi();
 }
 
 class _NewsListViewBuilderState extends State<NewsListViewBuilder> {
-  var article;
-  final controller = ScrollController();
+  // var article;
+  final ScrollController controller = ScrollController();
+  late NewsServices news;
+  late Future<List<ArticlesModel>> article;
   List<ArticlesModel> articleData = [];
-  NewsServices news = NewsServices();
+  // NewsServices news = NewsServices();
   @override
   void initState() {
-    article = news.getGeneralNews(widget.categoryType);
-    controller.addListener(() {
-      if (controller.offset == controller.position.maxScrollExtent) {
-        setState(() {
-          article = news.getNextNews();
-        });
-      }
-    });
     super.initState();
+    news = NewsServices();
+    _setupNewsService();
+    controller.addListener(_scrollListener);
   }
 
-/////////// errrrrrrrrrrrrrrrrrrrrrrror ///////////
-  Future<void> changeLanguage(language) async {
-    articleData.clear();
-    Future.delayed(const Duration(seconds: 2));
-    news.getNewsLanguage(language);
-    List<ArticlesModel> data = [];
-    data = await news.getGeneralNews(widget.categoryType);
+  @override
+  void didUpdateWidget(NewsListViewBuilder oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.language != widget.language ||
+        oldWidget.categoryType != widget.categoryType) {
+      _resetAndFetchNews();
+    }
   }
-///////////////////////////////////////////////////
+
+  void _setupNewsService() {
+    news.getNewsLanguage(widget.language);
+    article = news.getGeneralNews(widget.categoryType);
+  }
+
+  void _resetAndFetchNews() {
+    articleData.clear();
+    news.getNewsLanguage(widget.language);
+    article = news.getGeneralNews(widget.categoryType).then((data) {
+      articleData = data;
+      return data;
+    });
+    setState(() {});
+  }
+
+  void _scrollListener() {
+    if (controller.offset >= controller.position.maxScrollExtent &&
+        !controller.position.outOfRange) {
+      setState(() {
+        article = news.getNextNews().then((newData) {
+          articleData.addAll(newData);
+          return articleData;
+        });
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,43 +109,26 @@ class _NewsListViewBuilderState extends State<NewsListViewBuilder> {
                               ? NewsListView(
                                   article: articleData[index],
                                 )
-                              : articleData.isEmpty
-                                  ? const Text(
-                                      "There Is No More\nData...",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 35,
-                                        backgroundColor:
-                                            Color.fromARGB(255, 239, 237, 237),
-                                      ),
-                                    )
-                                  : const Center(
-                                      child: CircularProgressIndicator(
-                                        color: Colors.amber,
-                                      ),
-                                    );
+                              // : articleData.isEmpty
+                              //     ? const Text(
+                              //         "There Is No More\nData...",
+                              //         textAlign: TextAlign.center,
+                              //         style: TextStyle(
+                              //           fontSize: 35,
+                              //           backgroundColor:
+                              //               Color.fromARGB(255, 239, 237, 237),
+                              //         ),
+                              //       )
+                              : const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.amber,
+                                  ),
+                                );
                         },
                       ),
                     ),
                   ],
-                )
-                //     ListView.builder(
-                //   shrinkWrap: true,
-                //   controller: controller,
-                //   physics: const BouncingScrollPhysics(),
-                //   itemCount: articleData.length + 1,
-                //   itemBuilder: (context, index) {
-                //     return index < articleData.length
-                //         ? NewsListView(
-                //             article: articleData[index],
-                //           )
-                //         : const Center(
-                //             child: CircularProgressIndicator(
-                //             color: Colors.amber,
-                //           ));
-                //   },
-                // ),
-                ),
+                )),
           );
         } else if (snapshot.hasError) {
           return const AlertDialog(
@@ -134,5 +148,3 @@ class _NewsListViewBuilderState extends State<NewsListViewBuilder> {
     );
   }
 }
-
-class Taxi extends _NewsListViewBuilderState {}

@@ -3,8 +3,10 @@ import 'package:news_app_ui_setup/models/category_model.dart';
 import 'package:news_app_ui_setup/widgets/category_list_view.dart';
 
 class CategoryListViewBuilder extends StatelessWidget {
+  final String language;
   const CategoryListViewBuilder({
     super.key,
+    required this.language,
   });
 
   @override
@@ -23,8 +25,10 @@ class CategoryListViewBuilder extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               itemCount: categoryTypes.length,
               physics: const BouncingScrollPhysics(),
-              itemBuilder: (context, index) =>
-                  CategoryListView(category: categoryTypes[index]),
+              itemBuilder: (context, index) => CategoryListView(
+                category: categoryTypes[index],
+                language: language,
+              ),
             ),
           ),
         ],

@@ -6,8 +6,13 @@ import 'package:stroke_text/stroke_text.dart';
 class CategoryListView extends StatelessWidget {
   final Category? category;
   final Color color;
-  const CategoryListView(
-      {super.key, required this.category, this.color = Colors.white});
+  final String language;
+  const CategoryListView({
+    super.key,
+    required this.category,
+    this.color = Colors.white,
+    required this.language,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +21,10 @@ class CategoryListView extends StatelessWidget {
         Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => NewsOfCategoryType(category!.categoryName),
+              builder: (context) => NewsOfCategoryType(
+                categorytype: category!.categoryName,
+                language: language,
+              ),
             ));
       },
       child: Row(

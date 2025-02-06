@@ -3,8 +3,13 @@ import 'package:news_app_ui_setup/widgets/news_list_view_builder.dart';
 
 class NewsOfCategoryType extends StatefulWidget {
   final String categorytype;
-  const NewsOfCategoryType(this.categorytype, {super.key});
+  final String language;
 
+  const NewsOfCategoryType({
+    super.key,
+    required this.categorytype,
+    required this.language,
+  });
   @override
   State<NewsOfCategoryType> createState() => _NewsOfCategoryTypeState();
 }
@@ -29,14 +34,13 @@ class _NewsOfCategoryTypeState extends State<NewsOfCategoryType> {
               style: TextStyle(
                   color: Colors.amber[800], fontWeight: FontWeight.bold),
             ),
-            // const Padding(
-            //   padding: EdgeInsets.only(left: 20),
-            //   child: DropDownList(),
-            // ),
           ],
         ),
       ),
-      body: NewsListViewBuilder(categoryType: widget.categorytype),
+      body: NewsListViewBuilder(
+        categoryType: widget.categorytype,
+        language: widget.language,
+      ),
     );
   }
 }
