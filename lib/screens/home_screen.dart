@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:news_app_ui_setup/services/news_services.dart';
 import 'package:news_app_ui_setup/widgets/category_list_view_builder.dart';
 import 'package:news_app_ui_setup/widgets/drop_down_list.dart';
 import 'package:news_app_ui_setup/widgets/news_list_view_builder.dart';
@@ -11,12 +12,46 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String currentLanguage = 'ar'; // Default language
+  String currentLanguage = 'ar';
+  TextEditingController searchController = TextEditingController();
+  final NewsServices newsService = NewsServices(); // Add this
 
   void updateLanguage(String newLang) {
-    setState(() {
-      currentLanguage = newLang;
+    setState(() => currentLanguage = newLang);
+    newsService.getNewsLanguage(newLang);
+  }
+
+  void performSearch() {
+    newsService.searchNews(searchController.text).then((_) {
+      if (mounted) {
+        setState(() {}); // Force UI update
+        Navigator.pop(context);
+      }
     });
+    searchController.clear();
+  }
+
+  void showSearchDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Search News"),
+        content: TextField(
+          controller: searchController,
+          autofocus: true,
+          onSubmitted: (_) => performSearch(),
+          decoration: const InputDecoration(hintText: "Enter search terms"),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              performSearch();
+            },
+            child: const Text("Search"),
+          )
+        ],
+      ),
+    );
   }
 
   @override
@@ -43,24 +78,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 onLanguageChanged: updateLanguage,
               ),
             ),
-            // IconButton(
-            //   onPressed: () {
-            //     showDialog(
-            //       context: context,
-            //       builder: (context) {
-            //         return TextField(
-            //           onSubmitted: (value) {
-            //             setState(() {
-            //               Navigator.of(context).pop();
-            //               NewsServices().searchNews(value);
-            //             });
-            //           },
-            //         );
-            //       },
-            //     );
-            //   },
-            //   icon: const Icon(Icons.search_rounded),
-            // )
+            IconButton(
+              onPressed: () => showSearchDialog(context),
+              icon: const Icon(Icons.search_rounded),
+            )
           ],
         ),
       ),

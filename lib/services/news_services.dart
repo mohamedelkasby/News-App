@@ -9,7 +9,8 @@ class NewsServices {
   String lang = "ar";
   String categoryType = "";
   List<ArticlesModel> newsData = [];
-  NewsServices();
+
+  // NewsServices();
   String changedData() {
     return "$baseUrl?apikey=$apikey&category=$categoryType&language=$lang";
   }
@@ -70,35 +71,25 @@ class NewsServices {
 
   ///under test......
   Future<List<ArticlesModel>> searchNews(String searchValue) async {
-    if (nextPage == "") {
-      try {
-        Response response =
-            await dio.get("$baseUrl?apikey=$apikey&q=$searchValue");
-        List<dynamic> articles = response.data["results"];
-        for (var article in articles) {
-          ArticlesModel articlesModel = ArticlesModel.fromJson(article);
-          newsData.add(articlesModel);
-        }
-        nextPage = response.data["nextPage"];
-        return newsData;
-      } on Exception catch (e) {
-        return [];
-      }
-    } else {
-      try {
-        Response response = await dio
-            .get("$baseUrl?apikey=$apikey&q=$searchValue&page=$nextPage");
-        List<dynamic> articles = response.data["results"];
-        for (var article in articles) {
-          ArticlesModel articlesModel = ArticlesModel.fromJson(article);
-          newsData.add(articlesModel);
-        }
-        nextPage = response.data["nextPage"];
-        return newsData;
-      } on Exception catch (e) {
-        // TODO
-        return [];
-      }
+    // Reset data for new search
+    print("in the search news");
+    newsData.clear();
+    nextPage = "";
+
+    try {
+      final String url = searchValue != ""
+          ? "$baseUrl?apikey=$apikey&q=$searchValue&language=$lang"
+          : "$baseUrl?apikey=$apikey&category=$categoryType&language=$lang";
+
+      Response response = await dio.get(url);
+
+      List<dynamic> articles = response.data["results"];
+      newsData =
+          articles.map((article) => ArticlesModel.fromJson(article)).toList();
+      nextPage = response.data["nextPage"] ?? "";
+      return newsData;
+    } catch (e) {
+      return [];
     }
   }
 }
