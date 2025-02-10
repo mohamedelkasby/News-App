@@ -6,11 +6,13 @@ import 'package:news_app_ui_setup/widgets/news_list_view.dart';
 class NewsListViewBuilder extends StatefulWidget {
   final String? categoryType;
   final String language;
+  final bool isSearch;
 
   const NewsListViewBuilder({
     super.key,
     this.categoryType,
     required this.language,
+    this.isSearch = false,
   });
 
   @override
@@ -30,7 +32,6 @@ class _NewsListViewBuilderState extends State<NewsListViewBuilder> {
     super.initState();
     news = NewsServices();
     _setupNewsService();
-    article = news.getGeneralNews(widget.categoryType);
     scrollController.addListener(_handleScroll);
   }
 
@@ -57,6 +58,7 @@ class _NewsListViewBuilderState extends State<NewsListViewBuilder> {
     }
   }
 
+  // this method is called when the widget is updated <=======================
   @override
   void didUpdateWidget(NewsListViewBuilder oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -68,18 +70,20 @@ class _NewsListViewBuilderState extends State<NewsListViewBuilder> {
 
   void _setupNewsService() {
     news.getNewsLanguage(widget.language);
-    article = news.getGeneralNews(widget.categoryType);
+    article = widget.isSearch == true
+        ? news.searchNews(searchValue: widget.categoryType!)
+        : news.getGeneralNews(widget.categoryType);
     hasReachedEnd = false;
   }
 
-  void _resetAndFetchNews() {
+  Future<void> _resetAndFetchNews() async {
     articleData.clear();
     hasReachedEnd = false;
     news.getNewsLanguage(widget.language);
-    article = news.getGeneralNews(widget.categoryType).then((data) {
-      articleData = data;
-      return data;
-    });
+    article = widget.isSearch
+        ? news.searchNews(searchValue: widget.categoryType!)
+        : news.getGeneralNews(widget.categoryType);
+    articleData = await article;
     setState(() {});
   }
 
@@ -151,7 +155,8 @@ class _NewsListViewBuilderState extends State<NewsListViewBuilder> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Pull to refresh',
+                    'Pull to refresh\nor\ncheck back later',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.grey[400],
                       fontSize: 14,
@@ -177,7 +182,29 @@ class _NewsListViewBuilderState extends State<NewsListViewBuilder> {
     return FutureBuilder<List<ArticlesModel>>(
       future: article,
       builder: (context, snapshot) {
-        if (snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, color: Colors.red, size: 50),
+                Text('Failed to load news'),
+                ElevatedButton(
+                  onPressed: () {
+                    // Retry loading
+                    setState(() {
+                      article = news.getGeneralNews(widget.categoryType);
+                    });
+                  },
+                  child: const Text('Retry'),
+                )
+              ],
+            ),
+          );
+        } else if (snapshot.hasData) {
           articleData = snapshot.data!;
 
           if (articleData.isEmpty) {
@@ -225,8 +252,6 @@ class _NewsListViewBuilderState extends State<NewsListViewBuilder> {
               ),
             ),
           );
-        } else if (snapshot.hasError) {
-          return _buildEmptyState();
         } else {
           return const Center(
             child: CircularProgressIndicator(

@@ -1,94 +1,150 @@
 import 'package:dio/dio.dart';
+import 'package:news_app_ui_setup/const.dart';
 import 'package:news_app_ui_setup/models/articles_model.dart';
 
+class NewsServicesException implements Exception {
+  final String message;
+  final int? statusCode;
+
+  NewsServicesException(this.message, [this.statusCode]);
+
+  @override
+  String toString() {
+    return 'NewsServicesException: $message ${statusCode != null ? '(Status Code: $statusCode)' : ''}';
+  }
+}
+
 class NewsServices {
-  final dio = Dio();
-  final String apikey = "pub_37622297baad7c416e91e2025d314c7e9e721";
-  final String baseUrl = "https://newsdata.io/api/1/news";
-  String nextPage = "";
-  String lang = "ar";
-  String categoryType = "";
-  List<ArticlesModel> newsData = [];
+  final Dio _dio = Dio();
+  String _nextPage = "";
+  String _lang = "ar";
+  String _categoryType = "";
+  List<ArticlesModel> _newsData = [];
 
-  // NewsServices();
-  String changedData() {
-    return "$baseUrl?apikey=$apikey&category=$categoryType&language=$lang";
+  void getNewsLanguage(String language) {
+    _lang = language;
+    _newsData.clear();
+    _nextPage = "";
+    // getNextNews();
   }
 
-  void getNewsLanguage(language) {
-    lang = language;
+  Future<List<ArticlesModel>> getGeneralNews(String? categoryName) async {
+    // Reset data for new request
+    _newsData.clear();
+    _nextPage = "";
 
-    newsData = [];
-    nextPage = "";
-    getNextNews();
-  }
+    // Determine category type
+    _categoryType =
+        (categoryName == null || categoryName.isEmpty) ? "top" : categoryName;
 
-  Future<List<ArticlesModel>> getGeneralNews(categoryName) async {
-    categoryName == null || categoryName == ""
-        ? categoryType = "top"
-        : categoryType = categoryName;
     try {
-      final response = await dio.get(changedData());
-      List<dynamic> articles = response.data["results"];
-      for (var article in articles) {
-        ArticlesModel articlesModel = ArticlesModel(
-            title: article["title"],
-            imageSource: article["image_url"],
-            link: article["link"],
-            subTitle: article["description"]);
+      // Construct URL
+      final url =
+          "$baseUrl?apikey=$apikey&category=$_categoryType&language=$_lang";
 
-        newsData.add(articlesModel);
+      // Make the API call
+      final response = await _dio.get(url);
+
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        // Parse articles
+        final List<dynamic> articles = response.data["results"] ?? [];
+
+        // Map articles to models
+        _newsData =
+            articles.map((article) => ArticlesModel.fromJson(article)).toList();
+
+        // Safely extract next page token
+        _nextPage = response.data["nextPage"]?.toString() ?? "";
+
+        return _newsData;
+      } else {
+        print('Failed to load news. Status code: ${response.statusCode}');
+        return [];
       }
-      nextPage = response.data["nextPage"];
-      return newsData;
     } catch (e) {
+      print('Error in getGeneralNews: $e');
       return [];
     }
   }
 
   Future<List<ArticlesModel>> getNextNews() async {
-    /// handle for the internet connection
-    if (nextPage == "") {
-      newsData = await getGeneralNews(categoryType);
-      return newsData;
-    } else {
-      try {
-        final response = await dio.get(
-            "$baseUrl?apikey=$apikey&category=$categoryType&language=$lang&page=$nextPage");
+    // If no next page, return current data or fetch initial data
+    if (_nextPage.isEmpty) {
+      return await getGeneralNews(_categoryType);
+    }
 
-        List<dynamic> articles = response.data["results"];
-        for (var article in articles) {
-          ArticlesModel articlesModel = ArticlesModel.fromJson(article);
-          newsData.add(articlesModel);
-        }
-        nextPage = response.data["nextPage"];
-        return newsData;
-      } catch (e) {
-        return [];
+    try {
+      // Construct URL for next page
+      final url =
+          "$baseUrl?apikey=$apikey&category=$_categoryType&language=$_lang&page=$_nextPage";
+
+      // Make the API call
+      final response = await _dio.get(url);
+
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        // Parse articles
+        final List<dynamic> articles = response.data["results"] ?? [];
+
+        // Map new articles
+        final newArticles =
+            articles.map((article) => ArticlesModel.fromJson(article)).toList();
+
+        // Add new articles to existing data
+        _newsData.addAll(newArticles);
+
+        // Safely extract next page token
+        _nextPage = response.data["nextPage"]?.toString() ?? "";
+
+        return _newsData;
+      } else {
+        print('Failed to load next news. Status code: ${response.statusCode}');
+        return _newsData;
       }
+    } catch (e) {
+      print('Error in getNextNews: $e');
+      return _newsData;
     }
   }
 
-  ///under test......
-  Future<List<ArticlesModel>> searchNews(String searchValue) async {
-    // Reset data for new search
-    print("in the search news");
-    newsData.clear();
-    nextPage = "";
+  Future<List<ArticlesModel>> searchNews({required String searchValue}) async {
+    // Clear previous search results
+    _newsData.clear();
+    _nextPage = "";
 
     try {
-      final String url = searchValue != ""
-          ? "$baseUrl?apikey=$apikey&q=$searchValue&language=$lang"
-          : "$baseUrl?apikey=$apikey&category=$categoryType&language=$lang";
+      // Ensure the search value is not empty
+      if (searchValue.trim().isEmpty) {
+        return [];
+      }
 
-      Response response = await dio.get(url);
+      // Construct search URL
+      final url =
+          "$baseUrl?apikey=$apikey&q=${Uri.encodeQueryComponent(searchValue)}";
 
-      List<dynamic> articles = response.data["results"];
-      newsData =
-          articles.map((article) => ArticlesModel.fromJson(article)).toList();
-      nextPage = response.data["nextPage"] ?? "";
-      return newsData;
+      // Make the API call
+      final response = await _dio.get(url);
+
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        // Parse articles
+        final List<dynamic> articles = response.data["results"] ?? [];
+
+        // Map articles
+        _newsData =
+            articles.map((article) => ArticlesModel.fromJson(article)).toList();
+
+        // Safely extract next page token
+        _nextPage = response.data["nextPage"]?.toString() ?? "";
+
+        return _newsData;
+      } else {
+        print('Failed to search news. Status code: ${response.statusCode}');
+        return [];
+      }
     } catch (e) {
+      print('Error in searchNews: $e');
       return [];
     }
   }

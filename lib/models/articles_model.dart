@@ -3,11 +3,12 @@ class ArticlesModel {
   final String? subTitle;
   final String? imageSource;
   final String link;
-  ArticlesModel(
-      {required this.title,
-      required this.imageSource,
-      required this.link,
-      required this.subTitle});
+  ArticlesModel({
+    required this.title,
+    required this.imageSource,
+    required this.link,
+    required this.subTitle,
+  });
   factory ArticlesModel.fromJson(json) {
     return ArticlesModel(
       title: json["title"],
